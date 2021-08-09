@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+  
+    <div id="app" a=1 b=2  style="color:red">hello{{age}} 
+        <span>杨帅</span> 
+        <span>{{name}}</span> 
+    </div>
+
+    <div></div>
+
+    
+    <script src="../dist/vue.js"></script>
+    <!-- <script src="../node_modules/vue/dist/vue.js"> </script> -->
+    <script>
+        let vm = new Vue({
+            data() {
+                return { // 组件为什么只能写函数 为什么实例上可以写函数或者对象呢？
+                    name: 'ys',
+                    age: 12,
+                    address:{
+                        n:504
+                    },
+                    arr:[{a:1}]
+                }
+            },
+        });
+        vm.$mount('#app')
+        // 不能给根新增属性， 如果是给根增加属性
+        // 默认不会是响应式的  (给对象增加不存在的属性可以采用Vue.set方法或者给对象重新赋值一个新的对象)
+        vm._data.address = {...vm._data.address,a:100}
+        // vm._data.address.c = 100 不会让c变成响应式的
+        
+
+        // 数组不使用defineProperty 原因在于性能差 （vue3如果用的是optionsApi会降维采用defineProperty 数组也是采用的defineProptery）
+        // 将常用的方法进行重写  修改数组本身的方法 有7个 变异方法 push pop shift unshift sort reverse splice
+        // 更改数组索引是无法被监控到的 更改数组长度也无法被监控到
+
+        // 如果数组中存放的是对象，他会将对象进行劫持
+        vm.arr.push({a:2},{a:2},{a:2})
+        console.log(vm.arr)
+    </script>
+</body>
+</html>

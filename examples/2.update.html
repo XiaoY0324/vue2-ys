@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- 调用render的时候 会进行取值 取name和age的时候 我就让name和age 记住重新渲染的逻辑-->
+    <!-- vue2 给每一个属性都配备了一个dep属性 用于依赖收集  -->
+    <div id="app">
+        hello{{age}} 
+        <span>杨帅</span> 
+        <span>{{name}}</span> 
+    </div>
+    <script src="../dist/vue.js"></script>
+    <script>
+        let vm = new Vue({
+            el:'#app',
+            data() {
+                return {
+                    name: 'ys',
+                    age: 12,
+                    a:1,
+                    b:2
+                }
+            },
+        });
+       setTimeout(() => {
+           debugger
+           vm.age = 100; // 数据变化了 我想手动更新?  数据变化 触发set方法的时候 可以直接调用重新渲染逻辑
+            //    vm._update(vm._render());
+       }, 1000);
+    </script>
+</body>
+</html>

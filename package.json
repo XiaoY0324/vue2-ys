@@ -1,0 +1,24 @@
+{
+  "name": "7.vue2-init",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "start": "rollup -cw"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.14.8",
+    "@babel/preset-env": "^7.14.8",
+    "rollup": "^2.55.1",
+    "rollup-plugin-babel": "^4.4.0"
+  },
+  "dependencies": {
+    "vue": "^2.6.14"
+  }
+}

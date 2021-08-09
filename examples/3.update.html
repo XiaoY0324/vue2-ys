@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- push shfit unshift pop reverse sort splice -->
+    <!-- 咱们在模板编译中有一个非常重要的代码就是做了JSON.stringfiy 意味着会访问对象里的所有属性 -->
+
+    <!-- 1.数组的依赖收集是靠数组的本身，如果数组里包含着对象也要让数组中的对象进行依赖收集 -->
+    <!-- 2.对象直接让属性进行依赖收集即可，如果属性对应值是对象或者数组也会依赖收集 -->
+    <div id="app">{{name}} {{age}} {{teacher}} </div>
+    <script src="../dist/vue.js"></script>
+    <script>
+        const vm = new Vue({
+            el:'#app',
+            data:{
+                name:'ys',
+                age:'12',
+                teacher:'sy'
+                // arr:[[1]], // _s(arr)
+            }
+        });
+        setTimeout(() => {
+            vm.name = 'xxx';
+            vm.age = 13;
+            vm.teacher = 'xxx';
+        }, 1000);
+        // 1.默认内部会先将data数据中的数据进行劫持 采用的是defineProperty
+        // 2.如果用户提供了el属性 会去查找有没有template，render如果没有传递则使用el对应的html作为模板
+        // 3.拿到模板变成render函数 渲染逻辑，当调用render时会进行取值
+        // 4.在创建之前 生成一个渲染watcher， 给每个属性增加了一个dep属性, 此时会将watcher放到全局上，再去调用渲染方法，每个属性对应的dep会收集这个watcher
+        // 5.如果多个属性多次在模板中取值 我们需要过滤 (name)dep -> watcher  我们希望watcher和dep是有关系的  一个dep对应多个watcher  一个watcher还对应多个dep  多对多的关系
+        // 我们需要将dep和watcher产生关联 后面计算属性都是基于dep和watcher的
+    </script>
+</body>
+</html>

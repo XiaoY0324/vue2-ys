@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="../dist/vue.js"></script>
+    <script>
+        // 在每个Vue执行的时候 都打印一句say hello
+        Vue.mixin({ // compositionApi  写成函数直接使用，而且可以用函数式的生命周期来使用
+            beforeCreate() {
+                console.log('say~~1')
+            },
+            a: 1
+        })
+        // Vue.options = {a:1,beforeCreate:[]}
+        Vue.mixin({ // compositionApi  写成函数直接使用，而且可以用函数式的生命周期来使用
+            beforeCreate() {
+                console.log('say~~2')
+            },
+            b: 2
+        });
+        let vm1 = new Vue({ // 命名冲突
+            beforeCreate() {
+                console.log('beforeCreate')
+            },
+        })
+        // let vm2 = new Vue({ // ?哪来的a？
+        //     beforeCreate() {
+        //         console.log('beforeCreate')
+        //     }
+        // });
+        // 面试题中有一个题就是Vue.mixin 优缺点？ 生命周期怎么合并的？
+    </script>
+</body>
+
+</html>
