@@ -66,7 +66,6 @@ function defineReactive(target, key, value) { // 定义响应式
             // console.log('属性设置',41)
             observe(newValue); // 设置的值如果是对象，那么就再次调用observe让对象变成响应式的
             value = newValue;
-            debugger;
             dep.notify();
         }
     })

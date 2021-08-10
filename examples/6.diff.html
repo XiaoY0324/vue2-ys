@@ -7,7 +7,24 @@
   <title>diff</title>
 </head>
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <h1>
+      <span>{{ name }}</span>
+    </h1>
+  </div>
   <script src="../dist/vue.js"></script>
+  <script>
+    let vm = new Vue({
+      el: '#app',
+      data: {
+        name: 'zf'
+      }
+    })
+
+    setTimeout(() => {
+      // 这一步，我们期望只更新 span 内文本，而 h1 和 span 都进行标签复用。
+      vm.name = 'ys';
+    }, 1000);
+  </script>
 </body>
 </html>

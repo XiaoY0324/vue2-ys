@@ -48,7 +48,6 @@ export function initMixin(Vue) {
         mountComponent(vm,el)// 组件挂载流程 
     }
     Vue.prototype.$watch = function(key,handler){
-        debugger;
        const watcher =  new Watcher(this,key,handler,{user:true});
     }  
 }
