@@ -1,6 +1,11 @@
 import { isSameVnode } from ".";
 
 export function patch(oldVnode, vnode) {
+  if (!oldVnode) {
+    // 组件初次渲染是没有 el 的, 直接生成真实节点即可
+    return createElm(vnode);
+  }
+
   if (oldVnode.nodeType === 1) {
     // 初始化渲染操作
     // 根据虚拟节点创造真实节点, 先根据虚拟节点创建一个真实节点，将节点插入到页面中在将老节点删除 
@@ -227,16 +232,33 @@ function updateProperties(vnode, oldProps = {}) { // oldProps 可能不存在，
     }
   }
 }
+function createComponent(vnode){
+  let i = vnode.props;
+  if ((i = i.hook) && (i = i.init)){ // 组件有init方法 那就调用init
+      i(vnode); // new Ctor().$mount()，并把 componentInstance 挂载到 vnode 上
+  }
+
+  if (vnode.componentInstance){ // vnode上有componentInstance 说明是组件的实例
+      return true; // 是组件
+  }
+  return false;
+}
 
 export function createElm(vnode) {
   const { tag, props, children, text } = vnode;
   if (typeof tag == 'string') {
-    vnode.el = document.createElement(tag); // 把创建的真实dom和虚拟dom映射在一起方便后续更新和复用
-    updateProperties(vnode); // 处理样式
-    children && children.forEach(child => {
-      vnode.el.appendChild(createElm(child))
-    });
-    // 样式稍后处理  diff算法的时候需要比较新老的属性进行更新？？？？？？
+    if (createComponent(vnode)) { // 组件渲染
+      console.log('组件渲染！！', vnode);
+      // createComponent 中组件的 init 方法执行，会调用 _update
+      // 生成真实节点挂载到组件实例的 $el 上 
+      return vnode.componentInstance.$el;
+    } else { // 正经元素
+      vnode.el = document.createElement(tag); // 把创建的真实dom和虚拟dom映射在一起方便后续更新和复用
+      updateProperties(vnode); // 处理样式
+      children && children.forEach(child => {
+        vnode.el.appendChild(createElm(child))
+      });
+    }
   } else {
     vnode.el = document.createTextNode(text);
   }

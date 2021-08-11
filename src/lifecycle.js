@@ -1,6 +1,7 @@
 import { createElement, createTextElement } from "./vdom/index.js"
 import { patch } from "./vdom/patch.js";
 import Watcher from './observer/watcher'
+import { callHook } from "./init.js";
 
 export function lifeCycleMixin(Vue) {
   Vue.prototype._update = function (vnode) { // 虚拟dom变成真实dom进行渲染的，后续更新也调用此方法
@@ -39,11 +40,14 @@ export function mountComponent(vm, el) {
   // vue3 里面靠的是产生一个effect, vue2中靠的是watcher
   let updateComponent = () => {
     // 1.产生虚拟节点 2.根据虚拟节点产生真实节点
+    console.log('render 方法前');
     vm._update(vm._render());
   }
   new Watcher(vm, updateComponent, () => {
     callHook('beforeUpdate')
   }); // 渲染是通过watcher来进行渲染的
+
+  callHook(vm, 'mounted')
 }
 
 // 和Vue3的渲染流程是否一致？

@@ -289,10 +289,49 @@
       return Constructor;
     }
 
+    var isResrved = function isResrved(tag) {
+      // 判断是否为原生标签
+      return ['a', 'div', 'p', 'span', 'ul', 'li', 'button', 'input', 'h1'].includes(tag);
+    };
+
+    function createComponent$1(vm, tag, props, children, Ctor) {
+      if (_typeof(Ctor) == 'object') {
+        // 调用 extend，将对象的组件选校继续转为子类
+        Ctor = vm.constructor.extend(Ctor);
+      } // 专门用来初始化组件的，组件的虚拟节点上还有一个 components，也就是 { Ctor, children }
+
+
+      props.hook = {
+        init: function init(compVnode) {
+          // console.log('sss', compVnode);
+          // 创建组件实例
+          var child = compVnode.componentInstance = new compVnode.componentOptions.Ctor({}); // 内部会产生一个真实节点(patch)，挂载到了 child.$el 和 compVnode.componentInstance.$el
+
+          child.$mount(); // 如果没传挂载目标，将组件挂载后的结果放到 $el 属性上
+        }
+      };
+      return vnode(vm, "vue-componet-".concat(tag), props, undefined, undefined, props.key, {
+        Ctor: Ctor,
+        children: children
+      });
+    }
+
     function createElement(vm, tag) {
       var props = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       var children = arguments.length > 3 ? arguments[3] : undefined;
-      return vnode(vm, tag, props, children, undefined, props.key);
+
+      if (isResrved(tag)) {
+        // 原生标签
+        return vnode(vm, tag, props, children, undefined, props.key);
+      } else {
+        console.log('组件节点 createElement'); // 根据当前组件的模板，它有两种可能的值，
+        //  @1 一种是传入对象 { template: '<button>内部按钮</button>' }，我们需要调用 extend 额外转为当前页面的子类
+        //  @2 一种是传入类，我们就不需要处理转为子类了，比如 { 'my-button': Vue.extend({ template: '<button>内部按钮</button>' })}
+
+        var Ctor = vm.$options['components'][tag]; // 根据组件配置或组件类 生成 vnode
+
+        return createComponent$1(vm, tag, props, children, Ctor);
+      }
     }
     function createTextElement(vm, text) {
       return vnode(vm, undefined, undefined, undefined, text);
@@ -301,18 +340,24 @@
       return oldVnode.tag == newVnode.tag && oldVnode.key === newVnode.key;
     }
 
-    function vnode(vm, tag, props, children, text, key) {
+    function vnode(vm, tag, props, children, text, key, componentOptions) {
       return {
         vm: vm,
         tag: tag,
         props: props,
         children: children,
         text: text,
-        key: key
+        key: key,
+        componentOptions: componentOptions
       };
     }
 
     function patch(oldVnode, vnode) {
+      if (!oldVnode) {
+        // 组件初次渲染是没有 el 的, 直接生成真实节点即可
+        return createElm(vnode);
+      }
+
       if (oldVnode.nodeType === 1) {
         // 初始化渲染操作
         // 根据虚拟节点创造真实节点, 先根据虚拟节点创建一个真实节点，将节点插入到页面中在将老节点删除 
@@ -537,6 +582,22 @@
       }
     }
 
+    function createComponent(vnode) {
+      var i = vnode.props;
+
+      if ((i = i.hook) && (i = i.init)) {
+        // 组件有init方法 那就调用init
+        i(vnode); // new Ctor().$mount()，并把 componentInstance 挂载到 vnode 上
+      }
+
+      if (vnode.componentInstance) {
+        // vnode上有componentInstance 说明是组件的实例
+        return true; // 是组件
+      }
+
+      return false;
+    }
+
     function createElm(vnode) {
       var tag = vnode.tag;
           vnode.props;
@@ -544,13 +605,22 @@
           text = vnode.text;
 
       if (typeof tag == 'string') {
-        vnode.el = document.createElement(tag); // 把创建的真实dom和虚拟dom映射在一起方便后续更新和复用
+        if (createComponent(vnode)) {
+          // 组件渲染
+          console.log('组件渲染！！', vnode); // createComponent 中组件的 init 方法执行，会调用 _update
+          // 生成真实节点挂载到组件实例的 $el 上 
 
-        updateProperties(vnode); // 处理样式
+          return vnode.componentInstance.$el;
+        } else {
+          // 正经元素
+          vnode.el = document.createElement(tag); // 把创建的真实dom和虚拟dom映射在一起方便后续更新和复用
 
-        children && children.forEach(function (child) {
-          vnode.el.appendChild(createElm(child));
-        }); // 样式稍后处理  diff算法的时候需要比较新老的属性进行更新？？？？？？
+          updateProperties(vnode); // 处理样式
+
+          children && children.forEach(function (child) {
+            vnode.el.appendChild(createElm(child));
+          });
+        }
       } else {
         vnode.el = document.createTextNode(text);
       }
@@ -754,12 +824,16 @@
       // vue3 里面靠的是产生一个effect, vue2中靠的是watcher
       var updateComponent = function updateComponent() {
         // 1.产生虚拟节点 2.根据虚拟节点产生真实节点
+        console.log('render 方法前');
+
         vm._update(vm._render());
       };
 
       new Watcher(vm, updateComponent, function () {
         callHook('beforeUpdate');
       }); // 渲染是通过watcher来进行渲染的
+
+      callHook(vm, 'mounted');
     } // 和Vue3的渲染流程是否一致？
 
     var oldArrayPrototype = Array.prototype;
@@ -979,7 +1053,21 @@
           return parentVal; // 如果儿子没有就直接用父亲的
         }
       };
-    });
+    }); // 组件 options 和 全局 Vue.options 的合并策略，类似数组改写方法，先自己，再原型链
+
+    strats.components = function (parentVal, childVal) {
+      // 组件的合并策略
+      var obj = Object.create(parentVal); // obj.__proto__  = parentVal;
+
+      if (childVal) {
+        for (var key in childVal) {
+          obj[key] = childVal[key];
+        }
+      }
+
+      return obj;
+    };
+
     function mergeOptions(parentVal, childVal) {
       // 合并的过程是自己定义的策略
       // 1.如果a的有b的没有，那么采用a的
@@ -1010,7 +1098,7 @@
       return options;
     }
 
-    function callHook$1(vm, hook) {
+    function callHook(vm, hook) {
       // 找到对应的处理函数依次执行
       var handlers = vm.$options[hook];
 
@@ -1020,14 +1108,13 @@
         }
       }
     }
-
     function initMixin(Vue) {
       Vue.prototype._init = function (options) {
         var vm = this; // 此时options 是用户的 我需要用用户的+全局的 合并出结果来
 
         vm.$options = mergeOptions(this.constructor.options, options); // 后续所有的原型中都可以通过 vm.$options 拿到用户传递的选项
 
-        callHook$1(vm, 'beforeCreate');
+        callHook(vm, 'beforeCreate');
         initState(vm); // 状态的初始化，目的就是初始化用户传入的props  data  computed watch
         // 判断用户是否传入了el ，如果传入了el 要实现页面的挂载
 
@@ -1074,6 +1161,41 @@
       Vue.mixin = function (options) {
         // 用户要合并的对象
         this.options = mergeOptions(this.options, options);
+      };
+
+      Vue.options.components = {}; // 放的是全局组件
+
+      /**
+       * 创建全局组件的 api
+       * @param {*} id  组件名，比如 'card-list'
+       * @param {*} componentDef 组件定义，如果为对象，可能有 name，props，template 等属性
+       */
+
+      Vue.component = function (id, componentDef) {
+        componentDef.name = componentDef.name || id; // 可以看出来，componentDef 会被传入 Vue.extend 方法，并返回一个类
+
+        componentDef = this.extend(componentDef); // 把组件的类挂到了全局的 Vue.options.components 上
+
+        this.options.components[id] = componentDef;
+      }; // 组件的核心方法，返回一个子类
+
+
+      Vue.extend = function (options) {
+        var Super = this; // 父类
+
+        var Sub = function vueComponent(opts) {
+          // 子类
+          this._init(opts); // 和 new Vue 一样，进行初始化流程
+
+        }; // 子类继承父类原型方法
+
+
+        Sub.prototype = Object.create(Super.prototype);
+        Sub.prototype.constructor = Sub; // 合并 Vue 全局选项和子类初始化选项，把全局挂自己身上
+        // 那么可以实现子类中找不到组件定义，可以去找父亲的
+
+        Sub.options = mergeOptions(this.options, options);
+        return Sub;
       };
     }
 

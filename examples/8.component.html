@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>组件渲染</title>
+</head>
+
+<body>
+  <div id="app">
+    <h1>
+      <my-button></my-button>
+      <my-button></my-button>
+      <my-button></my-button>
+    </h1>
+  </div>
+  <script src="../dist/vue.js"></script>
+  <!-- <script src="../node_modules/vue/dist/vue.js"></script> -->
+  <script>
+    Vue.component('my-button', { // 全局组件定义在实例的 __proto__(vm.__proto__)
+      data() {
+        return { a: 'wow' }
+      },
+      template: `<button>我的按钮 {{ a }}</button>`
+    });
+
+    let vm = new Vue({
+      beforeCreate() {
+        console.log('父 beforeCreate');
+      },
+      components: {
+        'my-button': { // 局部组件定义在自己身上(vm)
+          data() {
+            return { b: 'nice' }
+          },
+          beforeCreate() {
+            console.log('子 beforeCreate');
+          },
+          template: `<button>内部按钮{{ b }}</button>`,
+          mounted() {
+            console.log('子 mounted');
+          },
+        }
+      },
+      mounted() {
+        console.log('父 mounted');
+      },
+      el: '#app',
+      data: {
+        name: 'zf'
+      }
+    })
+
+    setTimeout(() => {
+      // 这一步，我们期望只更新 span 内文本，而 h1 和 span 都进行标签复用。
+      vm.name = 'ys';
+    }, 1000);
+  </script>
+</body>
+
+</html>

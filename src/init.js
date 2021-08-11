@@ -4,7 +4,7 @@ import Watcher from "./observer/watcher.js";
 import { createWatcher, initState } from "./state";
 import { mergeOptions } from "./utils.js";
 
-function callHook(vm,hook){ // 找到对应的处理函数依次执行
+export function callHook(vm,hook){ // 找到对应的处理函数依次执行
     const handlers = vm.$options[hook];
     if(handlers){
         for(let i = 0; i < handlers.length;i++){
