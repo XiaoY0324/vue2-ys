@@ -17,6 +17,8 @@ export function patch(oldVnode, vnode) {
     // -------------- diff 来啦 -----------------
     // 比较虚拟节点的差异，而且会递归下探到子节点
     patchVnode(oldVnode, vnode);
+    
+    return vnode.el; // 最终返回新的 el 元素
   }
 }
 

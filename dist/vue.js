@@ -329,6 +329,7 @@
         // -------------- diff 来啦 -----------------
         // 比较虚拟节点的差异，而且会递归下探到子节点
         patchVnode(oldVnode, vnode);
+        return vnode.el; // 最终返回新的 el 元素
       }
     } // 新旧 vnode 的 diff 比对
 
@@ -599,7 +600,7 @@
 
     var Watcher = /*#__PURE__*/function () {
       // 用户的回调 是用户的函数  
-      // exprOrFn是监控的属性 name (有可能是渲染watcher) 先取一下vm.name 作为老的值，后续值变化了 才去取一次
+      // exprOrFn: 可能是个表达式(计算属性)或者更新的函数(vm._update(vm._render()))或字符串(watch 创建的 watcher)
       // vm 是当前的实例  
       // options 就是参数列表
       function Watcher(vm, exprOrFn, callback) {
@@ -709,8 +710,19 @@
     function lifeCycleMixin(Vue) {
       Vue.prototype._update = function (vnode) {
         // 虚拟dom变成真实dom进行渲染的，后续更新也调用此方法
-        this.$el = patch(this.$el, vnode); // 渲染  传入一个真实的dom 和 vnode
-        // 更新  传入两个虚拟节点  diff算法 
+        var vm = this;
+        var preVnode = vm._vnode; // 上一次的虚拟节点
+
+        vm._vnode = vnode;
+
+        if (!preVnode) {
+          // 首次渲染，传入一个真实的 dom 和 vnode
+          this.$el = patch(this.$el, vnode);
+        } else {
+          console.log(preVnode); // 非首次渲染，传入两个 vnode，进行 dom diff
+
+          this.$el = patch(preVnode, vnode);
+        }
       };
 
       Vue.prototype._c = function () {

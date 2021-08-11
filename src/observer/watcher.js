@@ -2,7 +2,7 @@ let id = 0;
 import Dep from './dep';
 class Watcher {
     // 用户的回调 是用户的函数  
-    // exprOrFn是监控的属性 name (有可能是渲染watcher) 先取一下vm.name 作为老的值，后续值变化了 才去取一次
+    // exprOrFn: 可能是个表达式(计算属性)或者更新的函数(vm._update(vm._render()))或字符串(watch 创建的 watcher)
     // vm 是当前的实例  
     // options 就是参数列表
     constructor(vm,exprOrFn,callback,options = {}) {
